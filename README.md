@@ -19,7 +19,7 @@
 把本仓库克隆到 ZCode 的用户级 skill 目录：
 
 ```bash
-git clone https://github.com/<你的用户名>/paper-tracker.git "$HOME/.agents/skills/paper-tracker"
+git clone https://github.com/Invisibledreamchaser/paper-tracker.git "$HOME/.agents/skills/paper-tracker"
 ```
 
 重启 ZCode 会话即可。之后直接用自然语言提问即可触发，例如：

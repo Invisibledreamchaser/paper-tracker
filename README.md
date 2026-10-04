@@ -13,6 +13,7 @@
 - 🇨🇳 **中文检索**：直接输入中文方向，自动扩展为英文布尔检索式
 - 📝 **一句话总结**：每篇论文附 20~40 字中文摘要总结（基于真实 abstract，不编造）
 - ⚠️ **同文去重提示**：arXiv 预印本与期刊版同名时自动标注
+- 📄 **一键取全文**：按 DOI 自动解析开放获取 PDF（OpenAlex OA 链接 → 出版商直链 → Crossref 直链，含 Nature 系兜底模式），付费墙论文自动回退为链接
 - 🔑 **零配置**：使用 arXiv / NCBI / OpenAlex 官方公开 API，无需任何 API Key，仅依赖 Python 标准库
 
 ## 安装
@@ -47,8 +48,18 @@ paper-tracker/
 ├── README.md
 ├── LICENSE
 └── scripts/
-    └── fetch_papers.py   # arXiv + PubMed 检索脚本（纯标准库）
+    ├── fetch_papers.py   # arXiv + PubMed + OpenAlex 检索脚本（纯标准库）
+    └── fetch_pdf.py      # 按 DOI / arXiv id 下载开放获取 PDF
 ```
+
+### 获取某篇论文的全文 PDF
+
+```bash
+python scripts/fetch_pdf.py --doi 10.1038/s41598-026-73833-9 --out DRR-pipeline.pdf
+python scripts/fetch_pdf.py --arxiv 2411.06308 --out ood-sparse-view-ct.pdf
+```
+
+OA 论文直接落盘；付费墙论文会打印 DOI 链接与文章页面。
 
 ## 环境要求
 

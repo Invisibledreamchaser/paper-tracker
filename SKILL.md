@@ -90,3 +90,16 @@ python <skill目录>/scripts/fetch_papers.py \
 - 聊天中展示完整分组列表；若总篇数超过 ~30，聊天里每个期刊只列前 5 篇并注明"其余 N 篇见文件"，但**文件里必须完整收录全部条目**。
 - 报告末尾附一行：统计数字 + 所用检索式 + 检索窗口，方便用户复现或调整。
 - 用户想看某篇详情时，直接给出 PubMed/DOI/arXiv 链接并总结摘要，不要虚构实验数字——摘要里没有的信息不要编。
+
+## 第 5 步：获取全文 PDF（用户要原文时）
+
+对用户点名要全文/文件的论文，按 DOI 下载开放获取版本：
+
+```bash
+python <skill目录>/scripts/fetch_pdf.py --doi <DOI> --out <文件名>.pdf   # 期刊论文
+python <skill目录>/scripts/fetch_pdf.py --arxiv <id> --out <文件名>.pdf  # arXiv 论文
+```
+
+- 脚本按"OpenAlex OA 链接 → 由 DOI 推导的出版商直链（Nature 系含 `_reference.pdf` 兜底，即正式全文）→ Crossref 出版商直链"的顺序尝试，并校验 `%PDF` 魔数防止存下 HTML。
+- 下载成功 → 把 PDF 文件路径告诉用户；失败（通常是 IEEE/Elsevier/Springer 付费墙）→ 给出 DOI 链接和文章页面，说明受版权限制、建议通过机构订阅获取，不要反复重试。
+- 主动附 PDF 的好时机：报告中 OA 期刊（Scientific Reports、BMC 系、Frontiers 系、arXiv 预印本）的文章基本都能直接下载；同一论文同时有 arXiv 版时脚本会自动选中可下载的那份。

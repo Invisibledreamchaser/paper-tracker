@@ -77,6 +77,23 @@ def doi_derived_candidates(doi):
     return out
 
 
+def unpaywall_candidates(doi):
+    """OA repository copies (university servers etc.) via Unpaywall — these
+    usually bypass publisher bot protection."""
+    url = f"https://api.unpaywall.org/v2/{urllib.parse.quote(doi)}?email={CONTACT}"
+    try:
+        data = json.loads(http_get(url).decode("utf-8", "replace"))
+    except Exception:
+        return []
+    out = []
+    locations = [data.get("best_oa_location") or {}] + (data.get("oa_locations") or [])
+    for loc in locations:
+        u = loc.get("url_for_pdf") or ""
+        if u and u not in out:
+            out.append(u)
+    return out
+
+
 def openalex_candidates(doi):
     """Return (title, [pdf_url, ...], landing_page_url) for a DOI."""
     url = f"{OPENALEX_API}/works/doi:{urllib.parse.quote(doi)}?mailto={CONTACT}"
@@ -136,7 +153,7 @@ def main():
         default_name = f"arxiv_{args.arxiv}.pdf"
     else:
         title, pdfs, landing = openalex_candidates(args.doi)
-        for u in doi_derived_candidates(args.doi) + crossref_candidates(args.doi):
+        for u in doi_derived_candidates(args.doi) + crossref_candidates(args.doi) + unpaywall_candidates(args.doi):
             if u not in pdfs:
                 pdfs.append(u)
         landing = landing or f"https://doi.org/{args.doi}"

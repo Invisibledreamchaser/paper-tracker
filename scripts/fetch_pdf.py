@@ -94,6 +94,41 @@ def unpaywall_candidates(doi):
     return out
 
 
+def semantic_scholar_candidates(doi):
+    """Semantic Scholar: resolves preprint (arXiv) versions of the same work."""
+    url = ("https://api.semanticscholar.org/graph/v1/paper/DOI:"
+           + urllib.parse.quote(doi) + "?fields=externalIds")
+    try:
+        data = json.loads(http_get(url).decode("utf-8", "replace"))
+    except Exception:
+        return []
+    arx = (data.get("externalIds") or {}).get("ArXiv")
+    return [f"https://arxiv.org/pdf/{arx}"] if arx else []
+
+
+def doaj_candidates(doi):
+    """DOAJ full-text links; for IEEE Access articles, translate the
+    ieeexplore document page into the script-friendly getPDF endpoint."""
+    url = "https://doaj.org/api/search/articles/doi:" + urllib.parse.quote(doi)
+    try:
+        data = json.loads(http_get(url).decode("utf-8", "replace"))
+    except Exception:
+        return []
+    out = []
+    for rec in data.get("results", []):
+        for link in (rec.get("bibjson") or {}).get("link", []):
+            u = link.get("url") or ""
+            if not u:
+                continue
+            m = re.search(r"ieeexplore\.ieee\.org/document/(\d+)", u)
+            if m:
+                n = m.group(1)
+                out.append(f"https://ieeexplore.ieee.org/stampPDF/getPDF.jsp?tp=&arnumber={n}")
+            elif u.lower().endswith(".pdf"):
+                out.append(u)
+    return out
+
+
 def openalex_candidates(doi):
     """Return (title, [pdf_url, ...], landing_page_url) for a DOI."""
     url = f"{OPENALEX_API}/works/doi:{urllib.parse.quote(doi)}?mailto={CONTACT}"
@@ -153,7 +188,9 @@ def main():
         default_name = f"arxiv_{args.arxiv}.pdf"
     else:
         title, pdfs, landing = openalex_candidates(args.doi)
-        for u in doi_derived_candidates(args.doi) + crossref_candidates(args.doi) + unpaywall_candidates(args.doi):
+        for u in (doi_derived_candidates(args.doi) + crossref_candidates(args.doi)
+                  + unpaywall_candidates(args.doi) + semantic_scholar_candidates(args.doi)
+                  + doaj_candidates(args.doi)):
             if u not in pdfs:
                 pdfs.append(u)
         landing = landing or f"https://doi.org/{args.doi}"
